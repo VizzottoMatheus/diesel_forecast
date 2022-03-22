@@ -74,7 +74,7 @@ oil_data_state <- function() {
   return(df_diesel_rs)
 }
 
-################# DADOS DE AGRICULTURA E PECUÁRIA
+################# DADOS DE AGRICULTURA E PECUÁRIA  (ESTÁ COM PROBLEMA)
 
 # FONTE: https://apisidra.ibge.gov.br/         # (IBGE)
 

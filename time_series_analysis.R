@@ -1,5 +1,3 @@
-#setwd('/Users/matheusvizzottodossantos/Desktop/Projetos/R/ECO02018/Article/')
-source("get_data.R")
 library(forecast)
 library(lubridate)
 library(TSstudio)
@@ -10,8 +8,8 @@ library(strucchange)
 library(tseries)
 library(plotly)
 
-df_cidades <- oil_data_cities()
-df_rs <- oil_data_state()
+source("get_data.R")
+df_rs <- oil_data_state() 
 
 head(df_rs)
 tail(df_rs)
@@ -30,41 +28,6 @@ diesel_ts <- ts(df_rs$VENDAS, start = date_min, end = date_max, frequency = 12)
 diesel_ts_log <- ts(log(df_rs$VENDAS), start = date_min, end = date_max, frequency = 12)
 ts_info(diesel_ts)
 
-### VISUALIZAÇÃO INICIAL
-
-# SÉRIE EM NÍVEL
-ts_plot(diesel_ts,
-        color = "green",
-        Ygrid = TRUE,
-        Xgrid = TRUE,
-        title = "VENDAS DE ÓLEO DIESEL NO RIO GRANDE DO SUL (METROS CÚBICOS)")
-# LOGARITMO DA SÉRIE EM NÍVEL (CORRIGE TENDÊNCIA NÃO-LINEAR)
-ts_plot(log(diesel_ts),
-        color = "green",
-        Ygrid = TRUE,
-        Xgrid = TRUE,
-        title = "VENDAS DE ÓLEO DIESEL NO RIO GRANDE DO SUL (METROS CÚBICOS)")
-
-trend <- rollapply(diesel_ts, width = 12, FUN = mean)
-df <- cbind(diesel_ts, trend)
-colnames(df) <- c("VENDAS", "MÉDIA MÓVEL 12 MESES")
-ts_plot(df,
-        color = "green",
-        Ygrid = TRUE,
-        Xgrid = TRUE,
-        title = "VENDAS DE ÓLEO DIESEL NO RIO GRANDE DO SUL (METROS CÚBICOS)")
-
-# SÉRIE EM LOGARITMO
-ts_plot(log(df),
-        color = "green",
-        Ygrid = TRUE,
-        Xgrid = TRUE,
-        title = "VENDAS DE ÓLEO DIESEL NO RIO GRANDE DO SUL (METROS CÚBICOS)")
-
-### DECOMPOSIÇÃO
-
-dec <- decompose(diesel_ts)
-plot(dec)
 
 ### ANÁLISE DE SAZONALIDADE
 
@@ -235,6 +198,7 @@ test_forecast(actual = diesel_ts_log,
   layout(title = "Vendas de óleo diesel - Observado vs Estimado e Projetado",
          yaxis = list(title = "log de m³"))
 
+
 #comparando modelos 5 e 6
 #arima3$aic NÃO SE COMPARAM MODELOS COM AIC E BIC QUANDO DIFEREM NOS DADOS (NORMAL VS. LOG)
 #arima3$bic
@@ -247,46 +211,44 @@ accuracy(exp(arima4_fc$mean), diesel_test) # com transormação logaritmica é m
 
 
 # 7 - HOLT WINTERS
-# shallow_grid <- ts_grid(diesel_ts,
-#                        model = "HoltWinters",
-#                        periods = 6,
-#                        window_space = 6,
-#                        window_test = 12,
-#                        hyper_params = list(alpha = seq(0,1,0.1),
-#                                            beta = seq(0,1,0.1),
-#                                            gamma = seq(0,1,0.1)),
-#                        parallel = TRUE,
-#                        n.cores = 8)
-# plot_grid(shallow_grid) # alfa: entre 0,1 e 0,5; beta: entre 0 e 0,1; gama: entre 0,1 e 0,3
-# plot_grid(shallow_grid, type = "3D", top = 250)
-# 
-# 
-# deep_grid <- ts_grid(diesel_ts,
-#                     model = "HoltWinters",
-#                     periods = 6,
-#                     window_space = 6,
-#                     window_test = 12,
-#                     hyper_params = list(alpha = seq(0.1,0.5,0.01),
-#                                         beta = seq(0,0.1,0.01),
-#                                         gamma = seq(0.1,0.3,0.01)),
-#                     parallel = TRUE,
-#                     n.cores = 8)
-# plot_grid(deep_grid)
-# plot_grid(deep_grid, type = "3D", top = 250)
-# 
-# md_hw_grid <- HoltWinters(diesel_ts,
-#                           alpha = deep_grid$alpha,
-#                           beta = deep_grid$beta,
-#                           gamma = deep_grid$gamma)
-# 
-# accuracy(md_hw_grid$fitted, diesel_ts)
-# 
-# plot(diesel_ts)
-# lines(md_hw_grid$fitted[,1], col = "red")
-# plot(md_hw_grid$fitted[,2]) # nível
-# plot(md_hw_grid$fitted[,3]) # tendência
-# plot(md_hw_grid$fitted[,4]) # sazonalidade
+shallow_grid <- ts_grid(diesel_ts,
+                      model = "HoltWinters",
+                      periods = 6,
+                      window_space = 6,
+                      window_test = 12,
+                      hyper_params = list(alpha = seq(0,1,0.1),
+                                          beta = seq(0,1,0.1),
+                                          gamma = seq(0,1,0.1)),
+                      parallel = TRUE,
+                      n.cores = 8)
+plot_grid(shallow_grid) # alfa: entre 0,1 e 0,5; beta: entre 0 e 0,1; gama: entre 0,1 e 0,3
+plot_grid(shallow_grid, type = "3D", top = 250)
 
+ 
+deep_grid <- ts_grid(diesel_ts,
+                   model = "HoltWinters",
+                   periods = 6,
+                   window_space = 6,
+                   window_test = 12,
+                   hyper_params = list(alpha = seq(0.1,0.5,0.01),
+                                       beta = seq(0,0.1,0.01),
+                                       gamma = seq(0.1,0.3,0.01)),
+                    )
+plot_grid(deep_grid)
+plot_grid(deep_grid, type = "3D", top = 250)
+ 
+md_hw_grid <- HoltWinters(diesel_ts,
+                         alpha = deep_grid$alpha,
+                         beta = deep_grid$beta,
+                         gamma = deep_grid$gamma)
+
+accuracy(md_hw_grid$fitted, diesel_ts)
+
+plot(diesel_ts)
+lines(md_hw_grid$fitted[,1], col = "red")
+plot(md_hw_grid$fitted[,2]) # nível
+plot(md_hw_grid$fitted[,3]) # tendência
+plot(md_hw_grid$fitted[,4]) # sazonalidade
 
 # PROJEÇÃO COM MODELO 6 (LOG SARIMA)
 arima4$coef
