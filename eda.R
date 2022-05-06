@@ -107,3 +107,4 @@ summary(reg_seas)
 ts_seasonal(diesel_ts_log, type = "box")
 reg_seas <- tslm(diesel_ts_log ~ season) # MESES SÃO SIGNIFICATIVOS?
 summary(reg_seas)
+
